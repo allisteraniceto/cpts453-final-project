@@ -158,3 +158,10 @@ function updateNodes() {
 
 // attach event listener to button
 document.getElementById("updateNodes").addEventListener("click", updateNodes);
+
+// attach event listener for 'Enter' key press
+document.getElementById("nodeCount").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    updateNodes();
+  }
+});
