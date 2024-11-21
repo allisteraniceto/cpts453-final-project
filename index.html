@@ -6,6 +6,18 @@
     <title>Force-Directed Graph with D3.js</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+      body {
+        /* background-image: url('https://www.usmagazine.com/wp-content/uploads/2019/11/Celebrities-Who-Became-Memes-01.jpg?quality=86&strip=all'); */
+        background-size: cover;
+      }
+      text {
+        font-family: sans-serif;
+        font-size: 12px;
+      }
+      button:hover {
+        background: #C8FFCE;
+        box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+      }
       .node {
         fill: #1f77b4;
         stroke: #fff;
@@ -15,26 +27,55 @@
         stroke: #999;
         stroke-opacity: 0.6;
       }
-      text {
-        font-family: sans-serif;
-        font-size: 12px;
-      }
       .input-container {
         display: flex;
         flex-direction: row;
+        gap: 0.8px;
+      }
+      .button-style {
+        border-radius: 18px;
+        height: 56px;
+        background: #F9D6FF;
+      }
+      .cloud-container svg{
+        width: 194.766px;
+        height: 95.17px;
+      }
+      .input-nodes {
+        width: 144px;
+        height: 51px;
+        border-radius: 18px;
+      }
+      .header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        letter-spacing: 3px;
+        font-family: "Times New Roman", serif;
+        font-weight: 600;
+        font-size: 40px;
+        padding: 10px;
       }
     </style>
   </head>
 
   <body>
     <!-- size of graph area-->
+    <div class="header">
+      <span>Force-Directed Graph with D3.js</span>
+    </div>
     <div class="input-container">
       <p>Nodes:</p>
-      <input type="number" id="nodeCount" placeholder="enter # of nodes" />
-      <button id="updateNodes">Update</button>
-    </div>
-    <div>
-      <svg></svg>
+      <input class="input-nodes" type="number" id="nodeCount" placeholder="Enter # of nodes"/>
+      <button class="button-style" id="updateNodes">Update Node #</button>
+      <button class="button-style" id="toggleMode">Show Graph</button>
+        <div class="cloud-container">
+          <svg class xmlns="http://www.w3.org/2000/svg" width="195" height="96" viewBox="0 0 195 96" fill="none">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M87.8388 0.830078C102.405 0.830078 115.302 7.97772 123.214 18.9571C124.32 18.8617 125.44 18.8131 126.571 18.8131C140.531 18.8131 152.76 26.2255 159.537 37.3294C161.359 36.9789 163.24 36.7953 165.164 36.7953C181.513 36.7953 194.766 50.0487 194.766 66.3977C194.766 82.7465 181.513 95.9999 165.164 96V96.0005H37.3487L37.3487 96.0004C16.7216 96.0004 0 79.2788 0 58.6517C0 38.0246 16.7216 21.303 37.3487 21.303C41.6635 21.303 45.8073 22.0347 49.663 23.3807C57.0823 9.93645 71.3971 0.830078 87.8388 0.830078Z" fill="#F9D6FF"/>
+          </svg>
+        </div>
+        <svg></svg>
+      </button>
     </div>
     <script src="src/js/script.js"></script>
   </body>
