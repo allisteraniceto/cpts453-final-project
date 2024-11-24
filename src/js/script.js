@@ -21,9 +21,10 @@ TASKS:
 
 // variable to toggle forces on/off
 let useForce = false;
-
 let simulation;
 let link, node, label;
+let repulsionStrength = -300;
+const NO_RESPULSION = 0;
 
 // set up SVG dimensions based on the size of the browser
 const width = window.innerWidth;
@@ -49,7 +50,7 @@ const links = [
 function renderForceGraph() {
   console.log("here rendering force graph");
   // create SVG container
-  const svg = d3.select("body").append("svg")
+  const svg = d3.select("body").insert("svg", ".cloud-container + *") // insert after 
     .attr("width", width)
     .attr("height", height);
   
@@ -338,6 +339,8 @@ function updateStatic(svg, nodeCount) {
     .attr("fill", "#333");
 }
 
+/* EVENT LISTENERS HERE */
+
 // attach event listener for when button is clicked by user
 document.getElementById("updateNodes").addEventListener("click", updateNodes);
 
@@ -345,6 +348,14 @@ document.getElementById("updateNodes").addEventListener("click", updateNodes);
 document.getElementById("nodeCount").addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     updateNodes();
+  }
+});
+
+// for repulstion strength
+document.getElementById("updateRepulsion").addEventListener("click", (event) => {
+  repulsionStrength = parseInt(document.getElementById("repulsionStrength").value, 10);
+  if (useForce) {
+    simulation.force("charge", d3.forceManyBody().strength(repulsionStrength));
   }
 });
 
