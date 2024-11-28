@@ -45,6 +45,7 @@ const links = [
   { source: "Node 2", target: "Node 4" },
   { source: "Node 3", target: "Node 4" },
   { source: "Node 4", target: "Node 5" },
+  { source: "Node 5", target: "Node 3" },
 ];
 
 function renderForceGraph() {
@@ -57,13 +58,7 @@ function renderForceGraph() {
   // create the simulation with forces
   simulation = d3
     .forceSimulation(nodes)
-    .force(
-      "link",
-      d3
-        .forceLink(links)
-        .id((d) => d.id)
-        .distance(100)
-    )
+    .force("link",d3.forceLink(links).id((d) => d.id).distance(100))
     .force("charge", d3.forceManyBody().strength(-300)) // set repulsion strength here (or can make it variable later)
     .force("center", d3.forceCenter(width / 2, height / 2))
     .force("x", d3.forceX(width / 2).strength(0.1))
@@ -352,7 +347,7 @@ document.getElementById("nodeCount").addEventListener("keydown", (event) => {
 });
 
 // for repulstion strength
-document.getElementById("updateRepulsion").addEventListener("click", (event) => {
+document.getElementById("updateRepulsion").addEventListener("click", () => {
   repulsionStrength = parseInt(document.getElementById("repulsionStrength").value, 10);
   if (useForce) {
     simulation.force("charge", d3.forceManyBody().strength(repulsionStrength));
@@ -362,7 +357,7 @@ document.getElementById("updateRepulsion").addEventListener("click", (event) => 
 // Attach an event listener to the toggle button
 document.getElementById("toggleMode").addEventListener("click", () => {
   useForce = !useForce;
-  // Remove the existing SVG element >> ensure removel of exisiting SVG container before rendering new 
+  // Remove the existing SVG element >> ensure removal of exisiting SVG container before rendering new 
   d3.select("svg").remove();
   if (useForce) {
     d3.select("#toggleMode").text("Force");
