@@ -25,6 +25,7 @@ let simulation;
 let link, node, label;
 let repulsionStrength = -300;
 const NO_RESPULSION = 0;
+let selectedNodes = [];
 
 const rootFontSize = parseFloat(
   getComputedStyle(document.documentElement).fontSize
@@ -105,7 +106,8 @@ function renderForceGraph() {
     .append("circle")
     .attr("r", 10)
     .attr("fill", "lightgreen")
-    .call(drag(simulation));
+    .call(drag(simulation))
+    .on("click", handleNodeClick);
 
   label = svg
     .append("g")
@@ -214,7 +216,16 @@ function updateForce(newNodes, newLinks, nodeCount) {
     .attr("r", 10)
     .attr("fill", "lightgreen")
     .merge(node)
-    .call(drag(simulation));
+    .call(drag(simulation))
+    .on("click", handleNodeClick);
+}
+
+function updateLinks() {
+  link = link.data(links); // Brings updated links data
+  link.exit().remove();  // Removal of not existing links
+  link = link.enter().append("line").attr("stroke-width", 2).merge(link);
+  simulation.force("link").links(links);  // update new link
+  simulation.alpha(1).restart();
 }
 
 // Function to update nodes and links
@@ -361,10 +372,11 @@ document.getElementById("nodeCount").addEventListener("keydown", (event) => {
 
 // for repulstion strength
 document.getElementById("updateRepulsion").addEventListener("click", () => {
-  repulsionStrength = parseInt(
-    document.getElementById("repulsionStrength").value,
-    10
-  );
+  repulsionStrength = parseInt(document.getElementById("repulsionStrength").value, 10);
+  if (isNaN(repulsionStrength)) {
+    alert("Please enter a valid number for repulsion strength.");
+    return;
+  }
   if (useForce) {
     simulation.force("charge", d3.forceManyBody().strength(repulsionStrength));
   }
@@ -376,10 +388,44 @@ document.getElementById("toggleMode").addEventListener("click", () => {
   // Remove the existing SVG element >> ensure removal of exisiting SVG container before rendering new
   d3.select("svg").remove();
   if (useForce) {
-    d3.select("#toggleMode").text("Force");
+    d3.select("#toggleMode").text("Force Graph");
     renderForceGraph();
   } else {
-    d3.select("#toggleMode").text("Static");
+    d3.select("#toggleMode").text("Static Graph");
     renderStaticGraph();
   }
 });
+
+// Function to handle node click
+function handleNodeClick(event, d) {
+  // Change the color of the clicked node
+  d3.select(this).attr("fill", "turquoise");
+
+  selectedNodes.push(d);
+  if (selectedNodes.length === 2) {
+    // Check if a link already exists between the selected nodes
+    const existingLinkIndex = links.findIndex(
+      (link) =>
+        (link.source === selectedNodes[0] && link.target === selectedNodes[1]) ||
+        (link.source === selectedNodes[1] && link.target === selectedNodes[0])
+    );
+
+    if (existingLinkIndex !== -1) {
+      // Remove existing link
+      links.splice(existingLinkIndex, 1);
+    } else {
+      // Create new link between selected nodes
+      links.push({ source: selectedNodes[0], target: selectedNodes[1] });
+    }
+    updateLinks();
+
+    // delay before reverting the color of the selected nodes
+    setTimeout(() => {
+      selectedNodes.forEach(node => {
+        d3.selectAll("circle").filter(d => d === node).attr("fill", "lightgreen");
+      });
+
+      selectedNodes = [];
+    }, 500);
+  }
+}
