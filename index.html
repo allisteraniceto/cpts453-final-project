@@ -6,16 +6,34 @@
     <title>Force-Directed Graph with D3.js</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+      html,
       body {
+        height: 100%;
         margin: 0;
+        padding: 0;
         background-size: cover;
+        background-color: lightblue;
+      }
+      .page {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        height: calc(100% - 4rem);
+      }
+      .svg-container {
+        width: calc(100% - 4rem);
+        height: calc(100% - 4rem);
+        background-color: white;
+        border-radius: 2rem;
+        margin: 1rem;
       }
       text {
         font-family: sans-serif;
         font-size: 12px;
       }
       button:hover {
-        background: #C8FFCE;
+        background: #c8ffce;
         box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
       }
       .node {
@@ -27,24 +45,40 @@
         stroke: #999;
         stroke-opacity: 0.6;
       }
+      .inputs-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        gap: 2rem;
+        height: 100%;
+        width: 20rem;
+        margin-top: -10rem;
+      }
+      .input-header {
+        margin: 0;
+      }
       .input-container {
         display: flex;
-        flex-direction: row;
-        gap: 3px;
+        flex-direction: column;
+        gap: 0.5rem;
       }
       .button-style {
         border-radius: 18px;
         height: 56px;
-        background: #F9D6FF;
-        width: 141px;
+        background: #f9d6ff;
+        width: 5rem;
         font-family: "Times New Roman", serif;
+      }
+      .button-style.toggle {
+        width: 8rem;
       }
       /* .cloud-container svg{
         width: 194.766px;
         height: 5rem;
       } */
       input {
-        width: 144px;
+        width: 10rem;
         height: 51px;
         border-radius: 18px;
         font-size: 14px;
@@ -59,30 +93,67 @@
         font-weight: 600;
         font-size: 40px;
         padding: 10px;
+        height: 4rem;
       }
     </style>
   </head>
 
   <body>
     <!-- size of graph area-->
-    <div class="header"">
+    <div class="header">
       <span>Force-Directed Graph with D3.js</span>
     </div>
-    <div class="input-container"">
-      <p>Nodes:</p>
-      <input class="input-nodes" type="number" id="nodeCount" placeholder="Enter # of nodes"/>
-      <button class="button-style" id="updateNodes">Update Node #</button>
-      <p>Repulsion Strength:</p>
-      <input class="input-strength" type="number" id="repulsionStrength" placeholder="Enter repulsion strength" style="width: 165px"/>
-      <button class="button-style" id="updateRepulsion">Update</button>
-      <button class="button-style" id="toggleMode">Show Graph</button>
+    <div class="page">
+      <div class="inputs-container">
+        <div class="toggle-container">
+          <button class="button-style toggle" id="toggleMode">
+            Show Graph
+          </button>
+        </div>
+        <div class="input-container">
+          <p class="input-header">Nodes:</p>
+          <div class="input-row">
+            <input
+              class="input-nodes"
+              type="number"
+              id="nodeCount"
+              placeholder="Enter # of nodes" />
+            <button class="button-style" id="updateNodes">Update</button>
+          </div>
+        </div>
+        <div class="input-container">
+          <p class="input-header">Links:</p>
+          <div class="input-row">
+            <input
+              class="input-links"
+              type="number"
+              id="linkCount"
+              placeholder="Enter # of links" />
+            <button class="button-style" id="updateLinks">Update</button>
+          </div>
+        </div>
+        <div class="input-container">
+          <p class="input-header">Repulsion Strength:</p>
+          <div class="input-row">
+            <input
+              class="input-strength"
+              type="number"
+              id="repulsionStrength"
+              placeholder="Enter repulsion strength" />
+            <button class="button-style" id="updateRepulsion">Update</button>
+          </div>
+        </div>
         <!-- <div class="cloud-container">
-          <svg class xmlns="http://www.w3.org/2000/svg" width="195" height="96" viewBox="0 0 195 96" fill="none">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M87.8388 0.830078C102.405 0.830078 115.302 7.97772 123.214 18.9571C124.32 18.8617 125.44 18.8131 126.571 18.8131C140.531 18.8131 152.76 26.2255 159.537 37.3294C161.359 36.9789 163.24 36.7953 165.164 36.7953C181.513 36.7953 194.766 50.0487 194.766 66.3977C194.766 82.7465 181.513 95.9999 165.164 96V96.0005H37.3487L37.3487 96.0004C16.7216 96.0004 0 79.2788 0 58.6517C0 38.0246 16.7216 21.303 37.3487 21.303C41.6635 21.303 45.8073 22.0347 49.663 23.3807C57.0823 9.93645 71.3971 0.830078 87.8388 0.830078Z" fill="#F9D6FF"/>
-          </svg>
-        </div> -->
-      </button>
+            <svg class xmlns="http://www.w3.org/2000/svg" width="195" height="96" viewBox="0 0 195 96" fill="none">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M87.8388 0.830078C102.405 0.830078 115.302 7.97772 123.214 18.9571C124.32 18.8617 125.44 18.8131 126.571 18.8131C140.531 18.8131 152.76 26.2255 159.537 37.3294C161.359 36.9789 163.24 36.7953 165.164 36.7953C181.513 36.7953 194.766 50.0487 194.766 66.3977C194.766 82.7465 181.513 95.9999 165.164 96V96.0005H37.3487L37.3487 96.0004C16.7216 96.0004 0 79.2788 0 58.6517C0 38.0246 16.7216 21.303 37.3487 21.303C41.6635 21.303 45.8073 22.0347 49.663 23.3807C57.0823 9.93645 71.3971 0.830078 87.8388 0.830078Z" fill="#F9D6FF"/>
+            </svg>
+          </div> -->
+      </div>
+      <div class="svg-container">
+        <svg></svg>
+      </div>
     </div>
+
     <script src="src/js/script.js"></script>
   </body>
 </html>
