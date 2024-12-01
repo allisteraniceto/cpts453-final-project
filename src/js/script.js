@@ -26,12 +26,19 @@ let link, node, label;
 let repulsionStrength = -300;
 const NO_RESPULSION = 0;
 
-// set up SVG dimensions based on the size of the browser
-const width = window.innerWidth;
-const height = window.innerHeight;
+const rootFontSize = parseFloat(
+  getComputedStyle(document.documentElement).fontSize
+);
 
-// default data for nodes and links between 
-const nodes = [
+const widthOffset = 20 * rootFontSize; // subtract width of the inputs container
+const heightOffset = 4 * rootFontSize; // subtract height of the header
+
+// set up SVG dimensions based on the size of the browser
+const width = window.innerWidth - widthOffset;
+const height = window.innerHeight - heightOffset;
+
+// default data for nodes and links between
+let nodes = [
   { id: "Node 1" },
   { id: "Node 2" },
   { id: "Node 3" },
@@ -39,7 +46,7 @@ const nodes = [
   { id: "Node 5" },
 ];
 
-const links = [
+let links = [
   { source: "Node 1", target: "Node 2" },
   { source: "Node 1", target: "Node 3" },
   { source: "Node 2", target: "Node 4" },
@@ -48,17 +55,32 @@ const links = [
   { source: "Node 5", target: "Node 3" },
 ];
 
+// ADDEDEDEDEDED: Function to create the SVG container
+function createSvgContainer() {
+  d3.select(".svg-container svg").remove(); // Remove any existing SVG
+  return d3
+    .select(".svg-container")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+}
+
 function renderForceGraph() {
   console.log("here rendering force graph");
   // create SVG container
-  const svg = d3.select("body").insert("svg", ".cloud-container + *") // insert after 
-    .attr("width", width)
-    .attr("height", height);
-  
+
+  const svg = createSvgContainer();
+
   // create the simulation with forces
   simulation = d3
     .forceSimulation(nodes)
-    .force("link",d3.forceLink(links).id((d) => d.id).distance(100))
+    .force(
+      "link",
+      d3
+        .forceLink(links)
+        .id((d) => d.id)
+        .distance(100)
+    )
     .force("charge", d3.forceManyBody().strength(-300)) // set repulsion strength here (or can make it variable later)
     .force("center", d3.forceCenter(width / 2, height / 2))
     .force("x", d3.forceX(width / 2).strength(0.1))
@@ -138,57 +160,115 @@ function updateNodes() {
   if (isNaN(nodeCount) || nodeCount < 1) {
     alert("Please enter a valid number of nodes.");
     return;
-  }  
+  }
 
   // generate new nodes
-  const newNodes = d3.range(nodeCount).map((i) => ({ id: `Node ${i + 1}` }));
+  nodes = d3.range(nodeCount).map((i) => ({
+    id: `Node ${i + 1}`,
+    x: (i + 1) * (width / (nodeCount + 1)),
+    y: height / 2,
+  }));
 
-  // generate new links (connecting each node to the next one)
-  const newLinks = d3.range(nodeCount - 1).map((i) => ({
-    source: newNodes[i],
-    target: newNodes[i + 1],
+  // Generate new links (for example, connecting each node to the next one)
+  links = d3.range(nodeCount - 1).map((i) => ({
+    source: nodes[i],
+    target: nodes[i + 1],
   }));
 
   if (useForce) {
-    updateForce(newNodes, newLinks, nodeCount);
+    updateForce(nodes, links, nodeCount);
   } else {
-    updateStatic(d3.select("svg"), nodeCount);
+    updateStatic(nodes, links);
   }
 }
 
-function updateForce(newNodes, newLinks, nodeCount){
+function updateForce(newNodes, newLinks, nodeCount) {
   console.log("here updating force");
-    // update the simulation with new nodes and links
-    simulation.nodes(newNodes);
-    simulation.force("link").links(newLinks);
-    simulation.alpha(1).restart();
-  
-    // update the links
-    link = link.data(newLinks);
-    link.exit().remove();
-    link = link.enter().append("line").attr("stroke-width", 2).merge(link);
-  
-    // update the labels
-    label = label.data(newNodes);
-    label.exit().remove();
-    label = label
-      .enter()
-      .append("text")
-      .merge(label)
-      .text((d) => d.id)
-      .attr("font-size", "12px")
-      .attr("fill", "#333");
-  
-    // update the nodes
-    node = node.data(newNodes);
-    node.exit().remove();
-    node = node
-      .enter()
-      .append("circle")
-      .attr("r", 10)
-      .attr("fill", "lightgreen")
-      .merge(node)
-      .call(drag(simulation));
+  // update the simulation with new nodes and links
+  simulation.nodes(newNodes);
+  simulation.force("link").links(newLinks);
+  simulation.alpha(1).restart();
+
+  // update the links
+  link = link.data(newLinks);
+  link.exit().remove();
+  link = link.enter().append("line").attr("stroke-width", 2).merge(link);
+
+  // update the labels
+  label = label.data(newNodes);
+  label.exit().remove();
+  label = label
+    .enter()
+    .append("text")
+    .merge(label)
+    .text((d) => d.id)
+    .attr("font-size", "12px")
+    .attr("fill", "#333");
+
+  // update the nodes
+  node = node.data(newNodes);
+  node.exit().remove();
+  node = node
+    .enter()
+    .append("circle")
+    .attr("r", 10)
+    .attr("fill", "lightgreen")
+    .merge(node)
+    .call(drag(simulation));
+}
+
+// Function to update nodes and links
+function updateStatic(newNodes, newLinks) {
+  if (isNaN(nodeCount) || nodeCount < 1) {
+    alert("Please enter a valid number of nodes.");
+    return;
+  }
+
+  // Remove existing nodes and links
+  d3.selectAll("circle").remove();
+  d3.selectAll("line").remove();
+  d3.selectAll("text").remove();
+
+  // create SVG container
+  const svg = createSvgContainer();
+
+  // Render static nodes
+  node = svg
+    .append("g")
+    .selectAll("circle")
+    .data(newNodes)
+    .enter()
+    .append("circle")
+    .attr("r", 10)
+    .attr("fill", "lightgreen")
+    .attr("cx", (d) => d.x)
+    .attr("cy", (d) => d.y);
+
+  // Render static links
+  link = svg
+    .append("g")
+    .selectAll("line")
+    .data(newLinks)
+    .enter()
+    .append("line")
+    .attr("stroke-width", 2)
+    .attr("x1", (d) => d.source.x)
+    .attr("y1", (d) => d.source.y)
+    .attr("x2", (d) => d.target.x)
+    .attr("y2", (d) => d.target.y);
+
+  // Render static labels
+  label = svg
+    .append("g")
+    .selectAll("text")
+    .data(newNodes)
+    .enter()
+    .append("text")
+    .text((d) => d.id)
+    .attr("x", (d) => d.x + 15)
+    .attr("y", (d) => d.y + 5)
+    .attr("font-size", "12px")
+    .attr("fill", "#333");
 }
 
 // Main renderStatic function
@@ -199,33 +279,6 @@ function renderStaticGraph() {
   renderLinks(svg, links);
   renderNodes(svg, nodes);
   renderLabels(svg, nodes);
-}
-// ADDEDEDEDEDED: Function to create the SVG container
-function createSvgContainer() {
-  d3.select("svg").remove(); // Remove any existing SVG
-  return d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height);
-}
-
-// dragging behavior for nodes
-function drag(simulation) {
-  return d3
-    .drag()
-    .on("start", (event, d) => {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
-    })
-    .on("drag", (event, d) => {
-      d.fx = event.x;
-      d.fy = event.y;
-    })
-    .on("end", (event, d) => {
-      if (!event.active) simulation.alphaTarget(0);
-      d.fx = null;
-      d.fy = null;
-    });
 }
 
 // Function to render static links
@@ -274,64 +327,24 @@ function renderLabels(svg, nodes) {
     .attr("fill", "#333");
 }
 
-// Function to update nodes and links
-function updateStatic(svg, nodeCount) {
-  if (isNaN(nodeCount) || nodeCount < 1) {
-    alert("Please enter a valid number of nodes.");
-    return;
-  }
-
-  // Generate new nodes and links
-  const newNodes = d3.range(nodeCount).map((i) => ({
-    id: `Node ${i + 1}`,
-    x: (i + 1) * (width / (nodeCount + 1)),
-    y: height / 2,
-  }));
-
-  const newLinks = d3.range(nodeCount - 1).map((i) => ({
-    source: newNodes[i],
-    target: newNodes[i + 1],
-  }));
-
-  // Update links
-  let linksSelection = svg.selectAll("line").data(newLinks);
-  linksSelection.exit().remove();
-  linksSelection = linksSelection
-    .enter()
-    .append("line")
-    .attr("stroke", "#999")
-    .attr("stroke-opacity", 0.6)
-    .attr("stroke-width", 2)
-    .merge(linksSelection)
-    .attr("x1", (d) => d.source.x)
-    .attr("y1", (d) => d.source.y)
-    .attr("x2", (d) => d.target.x)
-    .attr("y2", (d) => d.target.y);
-
-  // Update nodes
-  let nodesSelection = svg.selectAll("circle").data(newNodes);
-  nodesSelection.exit().remove();
-  nodesSelection = nodesSelection
-    .enter()
-    .append("circle")
-    .attr("r", 10)
-    .attr("fill", "pink")
-    .merge(nodesSelection)
-    .attr("cx", (d) => d.x)
-    .attr("cy", (d) => d.y);
-
-  // Update labels
-  let labelsSelection = svg.selectAll("text").data(newNodes);
-  labelsSelection.exit().remove();
-  labelsSelection = labelsSelection
-    .enter()
-    .append("text")
-    .merge(labelsSelection)
-    .text((d) => d.id)
-    .attr("x", (d) => d.x + 10)
-    .attr("y", (d) => d.y + 5)
-    .attr("font-size", "12px")
-    .attr("fill", "#333");
+// dragging behavior for nodes
+function drag(simulation) {
+  return d3
+    .drag()
+    .on("start", (event, d) => {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    })
+    .on("drag", (event, d) => {
+      d.fx = event.x;
+      d.fy = event.y;
+    })
+    .on("end", (event, d) => {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    });
 }
 
 /* EVENT LISTENERS HERE */
@@ -348,7 +361,10 @@ document.getElementById("nodeCount").addEventListener("keydown", (event) => {
 
 // for repulstion strength
 document.getElementById("updateRepulsion").addEventListener("click", () => {
-  repulsionStrength = parseInt(document.getElementById("repulsionStrength").value, 10);
+  repulsionStrength = parseInt(
+    document.getElementById("repulsionStrength").value,
+    10
+  );
   if (useForce) {
     simulation.force("charge", d3.forceManyBody().strength(repulsionStrength));
   }
@@ -357,7 +373,7 @@ document.getElementById("updateRepulsion").addEventListener("click", () => {
 // Attach an event listener to the toggle button
 document.getElementById("toggleMode").addEventListener("click", () => {
   useForce = !useForce;
-  // Remove the existing SVG element >> ensure removal of exisiting SVG container before rendering new 
+  // Remove the existing SVG element >> ensure removal of exisiting SVG container before rendering new
   d3.select("svg").remove();
   if (useForce) {
     d3.select("#toggleMode").text("Force");
