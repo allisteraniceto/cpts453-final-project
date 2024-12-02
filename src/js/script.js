@@ -358,6 +358,26 @@ function drag(simulation) {
     });
 }
 
+// Function to toggle inputs based on the current mode
+function toggleInputs() {
+  const nodeCountInput = document.getElementById("nodeCount");
+  const updateNodesButton = document.getElementById("updateNodes");
+  const repulsionStrengthInput = document.getElementById("repulsionStrength");
+  const updateRepulsionButton = document.getElementById("updateRepulsion");
+
+  if (useForce) {
+    nodeCountInput.disabled = false;
+    updateNodesButton.disabled = false;
+    repulsionStrengthInput.disabled = false;
+    updateRepulsionButton.disabled = false;
+  } else {
+    nodeCountInput.disabled = true;
+    updateNodesButton.disabled = true;
+    repulsionStrengthInput.disabled = true;
+    updateRepulsionButton.disabled = true;
+  }
+}
+
 /* EVENT LISTENERS HERE */
 
 // attach event listener for when button is clicked by user
@@ -394,6 +414,7 @@ document.getElementById("toggleMode").addEventListener("click", () => {
     d3.select("#toggleMode").text("Static Graph");
     renderStaticGraph();
   }
+  toggleInputs();
 });
 
 // Function to handle node click
