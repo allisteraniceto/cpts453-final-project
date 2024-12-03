@@ -19,11 +19,10 @@ TASKS:
     - after 125 nodes, the nodes have too much force and they go off the screen
 */
 
-// variable to toggle forces on/off
 let useForce = false;
 let simulation;
 let link, node, label;
-let repulsionStrength = -300;
+let repulsionStrength = -100;
 const NO_RESPULSION = 0;
 let selectedNodes = [];
 
@@ -66,6 +65,19 @@ function createSvgContainer() {
     .attr("height", height);
 }
 
+// generate random links between nodes AH
+function generateRandomLinks(nodes, numLinks) {
+  const links = [];
+  for (let i = 0; i < numLinks; i++) {
+    const source = nodes[Math.floor(Math.random() * nodes.length)].id;
+    const target = nodes[Math.floor(Math.random() * nodes.length)].id;
+    if (source !== target) {
+      links.push({ source, target });
+    }
+  }
+  return links;
+}
+
 function renderForceGraph() {
   console.log("here rendering force graph");
   // create SVG container
@@ -82,7 +94,7 @@ function renderForceGraph() {
         .id((d) => d.id)
         .distance(100)
     )
-    .force("charge", d3.forceManyBody().strength(-300)) // set repulsion strength here (or can make it variable later)
+    .force("charge", d3.forceManyBody().strength(repulsionStrength)) // set repulsion strength
     .force("center", d3.forceCenter(width / 2, height / 2))
     .force("x", d3.forceX(width / 2).strength(0.1))
     .force("y", d3.forceY(height / 2).strength(0.1));
@@ -173,11 +185,7 @@ function updateNodes() {
     y: height / 2,
   }));
 
-  // Generate new links (for example, connecting each node to the next one)
-  links = d3.range(nodeCount - 1).map((i) => ({
-    source: nodes[i],
-    target: nodes[i + 1],
-  }));
+  links = generateRandomLinks(nodes, nodeCount + 5);
 
   if (useForce) {
     updateForce(nodes, links, nodeCount);
@@ -186,6 +194,7 @@ function updateNodes() {
   }
 }
 
+// updating force directed graph
 function updateForce(newNodes, newLinks, nodeCount) {
   console.log("here updating force");
   // update the simulation with new nodes and links
@@ -226,24 +235,24 @@ function updateForce(newNodes, newLinks, nodeCount) {
     calculateAndLogMetrics(nodes, links, "Force Graph");
 }
 
+// updating links - create and delete
 function updateLinks() {
-  link = link.data(links); // Brings updated links data
-  link.exit().remove();  // Removal of not existing links
+  link = link.data(links); // brings updated links data
+  link.exit().remove();  // removal of not existing links
   link = link.enter().append("line").attr("stroke-width", 2).merge(link);
   simulation.force("link").links(links);  // update new link
   simulation.alpha(1).restart();
 
   calculateAndLogMetrics(nodes, links, "Force Graph");
 }
-
-// Function to update nodes and links
+// function to update nodes and links
 function updateStatic(newNodes, newLinks) {
   if (isNaN(nodeCount) || nodeCount < 1) {
     alert("Please enter a valid number of nodes.");
     return;
   }
 
-  // Remove existing nodes and links
+  // remove existing nodes and links
   d3.selectAll("circle").remove();
   d3.selectAll("line").remove();
   d3.selectAll("text").remove();
@@ -251,7 +260,7 @@ function updateStatic(newNodes, newLinks) {
   // create SVG container
   const svg = createSvgContainer();
 
-  // Render static nodes
+  // render static nodes
   node = svg
     .append("g")
     .selectAll("circle")
@@ -263,7 +272,7 @@ function updateStatic(newNodes, newLinks) {
     .attr("cx", (d) => d.x)
     .attr("cy", (d) => d.y);
 
-  // Render static links
+  // render static links
   link = svg
     .append("g")
     .selectAll("line")
@@ -276,7 +285,7 @@ function updateStatic(newNodes, newLinks) {
     .attr("x2", (d) => d.target.x)
     .attr("y2", (d) => d.target.y);
 
-  // Render static labels
+  // render static labels
   label = svg
     .append("g")
     .selectAll("text")
@@ -292,11 +301,11 @@ function updateStatic(newNodes, newLinks) {
     calculateAndLogMetrics(nodes, links, "Static Graph");
 }
 
-// Main renderStatic function
+// main renderStatic function
 function renderStaticGraph() {
   console.log("here rendering static graph");
   const svg = createSvgContainer();
-  // Initial static positions
+  // initial static positions
   renderLinks(svg, links);
   renderNodes(svg, nodes);
   renderLabels(svg, nodes);
@@ -304,7 +313,7 @@ function renderStaticGraph() {
   calculateAndLogMetrics(nodes, links, "Static Graph");
 }
 
-// Function to render static links
+// function to render static links
 function renderLinks(svg, links) {
   return svg
     .append("g")
@@ -321,7 +330,7 @@ function renderLinks(svg, links) {
     .attr("y2", (d) => d.target.y);
 }
 
-// Function to render static nodes
+// function to render static nodes
 function renderNodes(svg, nodes) {
   return svg
     .append("g")
@@ -335,7 +344,7 @@ function renderNodes(svg, nodes) {
     .attr("cy", (d) => d.y);
 }
 
-// Function to render static labels
+// function to render static labels
 function renderLabels(svg, nodes) {
   return svg
     .append("g")
@@ -370,7 +379,7 @@ function drag(simulation) {
     });
 }
 
-// Function to toggle inputs based on the current mode
+// function to toggle inputs based on the current mode
 function toggleInputs() {
   const nodeCountInput = document.getElementById("nodeCount");
   const updateNodesButton = document.getElementById("updateNodes");
@@ -401,8 +410,9 @@ function calculateAndLogMetrics(nodes, links, graphType) {
 }
 
 /* MEASUREMENTS */
-// ALL WIP
-// calculations edge crossings
+// WORK IN PROGRESS
+
+// calculations of edge crossings
 function countEdgeCrossings(links) {
   let crossings = 0;
   for (let i = 0; i < links.length; i++) {
@@ -458,7 +468,6 @@ function calculateGraphDensity(nodes, links) {
 }
 
 /* EVENT LISTENERS HERE */
-
 // attach event listener for when button is clicked by user
 document.getElementById("updateNodes").addEventListener("click", updateNodes);
 
@@ -481,10 +490,10 @@ document.getElementById("updateRepulsion").addEventListener("click", () => {
   }
 });
 
-// Attach an event listener to the toggle button
+// attach an event listener to the toggle button
 document.getElementById("toggleMode").addEventListener("click", () => {
   useForce = !useForce;
-  // Remove the existing SVG element >> ensure removal of exisiting SVG container before rendering new
+  // remove the existing SVG element >> ensure removal of exisiting SVG container before rendering new
   d3.select("svg").remove();
   if (useForce) {
     d3.select("#toggleMode").text("Force Graph");
@@ -496,14 +505,14 @@ document.getElementById("toggleMode").addEventListener("click", () => {
   toggleInputs();
 });
 
-// Function to handle node click
+// function to handle node click
 function handleNodeClick(event, d) {
-  // Change the color of the clicked node
+  // change the color of the clicked node
   d3.select(this).attr("fill", "turquoise");
 
   selectedNodes.push(d);
   if (selectedNodes.length === 2) {
-    // Check if a link already exists between the selected nodes
+    // check if a link already exists between the selected nodes
     const existingLinkIndex = links.findIndex(
       (link) =>
         (link.source === selectedNodes[0] && link.target === selectedNodes[1]) ||
@@ -511,10 +520,10 @@ function handleNodeClick(event, d) {
     );
 
     if (existingLinkIndex !== -1) {
-      // Remove existing link
+      // remove existing link
       links.splice(existingLinkIndex, 1);
     } else {
-      // Create new link between selected nodes
+      // create new link between selected nodes
       links.push({ source: selectedNodes[0], target: selectedNodes[1] });
     }
     updateLinks();
