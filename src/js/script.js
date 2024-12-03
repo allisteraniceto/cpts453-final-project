@@ -153,6 +153,8 @@ function renderForceGraph() {
         d.fy = null;
       });
   }
+
+  calculateAndLogMetrics(nodes, links, "Force Graph");
 }
 
 // update nodes and links dynamically
@@ -218,6 +220,10 @@ function updateForce(newNodes, newLinks, nodeCount) {
     .merge(node)
     .call(drag(simulation))
     .on("click", handleNodeClick);
+
+    updateLinks();
+
+    calculateAndLogMetrics(nodes, links, "Force Graph");
 }
 
 function updateLinks() {
@@ -226,6 +232,8 @@ function updateLinks() {
   link = link.enter().append("line").attr("stroke-width", 2).merge(link);
   simulation.force("link").links(links);  // update new link
   simulation.alpha(1).restart();
+
+  calculateAndLogMetrics(nodes, links, "Force Graph");
 }
 
 // Function to update nodes and links
@@ -280,6 +288,8 @@ function updateStatic(newNodes, newLinks) {
     .attr("y", (d) => d.y + 5)
     .attr("font-size", "12px")
     .attr("fill", "#333");
+
+    calculateAndLogMetrics(nodes, links, "Static Graph");
 }
 
 // Main renderStatic function
@@ -290,6 +300,8 @@ function renderStaticGraph() {
   renderLinks(svg, links);
   renderNodes(svg, nodes);
   renderLabels(svg, nodes);
+
+  calculateAndLogMetrics(nodes, links, "Static Graph");
 }
 
 // Function to render static links
@@ -376,6 +388,73 @@ function toggleInputs() {
     repulsionStrengthInput.disabled = true;
     updateRepulsionButton.disabled = true;
   }
+}
+
+function calculateAndLogMetrics(nodes, links, graphType) {
+  const edgeCrossings = countEdgeCrossings(links);
+  const nodeOverlaps = countNodeOverlaps(nodes);
+  const graphDensity = calculateGraphDensity(nodes, links);
+
+  console.log(`${graphType} - Edge Crossings: ${edgeCrossings}`);
+  console.log(`${graphType} - Node Overlaps: ${nodeOverlaps}`);
+  console.log(`${graphType} - Graph Density: ${graphDensity}`);
+}
+
+/* MEASUREMENTS */
+// ALL WIP
+// calculations edge crossings
+function countEdgeCrossings(links) {
+  let crossings = 0;
+  for (let i = 0; i < links.length; i++) {
+    for (let j = i + 1; j < links.length; j++) {
+      if (edgesIntersect(links[i], links[j])) {
+        crossings++;
+      }
+    }
+  }
+  return crossings;
+}
+
+// checks if edges intersects
+function edgesIntersect(link1, link2) {
+  const { x: x1, y: y1 } = link1.source;
+  const { x: x2, y: y2 } = link1.target;
+  const { x: x3, y: y3 } = link2.source;
+  const { x: x4, y: y4 } = link2.target;
+
+  const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+  if (denom === 0) return false; // Parallel lines
+
+  const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+  const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+
+  return ua > 0 && ua < 1 && ub > 0 && ub < 1;
+}
+
+// counts node overlaps
+function countNodeOverlaps(nodes) {
+  let overlaps = 0;
+  const radius = 10; // Assuming a fixed radius for nodes
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const distance = Math.sqrt(
+        Math.pow(nodes[i].x - nodes[j].x, 2) + Math.pow(nodes[i].y - nodes[j].y, 2)
+      );
+      if (distance < 2 * radius) {
+        overlaps++;
+      }
+    }
+  }
+  return overlaps;
+}
+
+// calculating graph density - will be same for force and static
+// ratio of the number of actual links to the number of possible links in a complete graph
+function calculateGraphDensity(nodes, links) {
+  const numNodes = nodes.length;
+  const numLinks = links.length;
+  const possibleLinks = (numNodes * (numNodes - 1)) / 2;
+  return numLinks / possibleLinks;
 }
 
 /* EVENT LISTENERS HERE */
