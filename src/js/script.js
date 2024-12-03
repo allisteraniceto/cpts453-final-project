@@ -487,6 +487,11 @@ document.getElementById("updateRepulsion").addEventListener("click", () => {
   }
   if (useForce) {
     simulation.force("charge", d3.forceManyBody().strength(repulsionStrength));
+    simulation.alpha(1).restart(); // reheat the simulation
+    // delay before cooling it back down (too fast)
+    setTimeout(() => {
+      simulation.alpha(0).restart(); // cool it back down
+    }, 500) //.5 seconds
   }
 });
 
